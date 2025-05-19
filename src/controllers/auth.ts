@@ -10,6 +10,7 @@ import company from "../models/company";
 import department from "../models/department";
 import subDepartment from "../models/subDepartment";
 import mongoose from "mongoose";
+import synergies from "../models/synergies";
 
 dotenv.config();
 
@@ -40,7 +41,7 @@ export const userSignup = async (req: Request, res: Response, next: NextFunction
             }
         }
         else {
-            res.status(200).json({ status: 409, success: false, message: "You are already registred please login!" });
+            res.status(409).json({ status: 409, success: false, message: "You are already registred please login!" });
         }
     } catch (error) {
         res.status(500).json({ status: 500, success: false, message: "Internal server error!", data: {} });
@@ -388,83 +389,6 @@ export const deleteSubDepartment = async (req: Request, res: Response, next: Nex
 /* Get company structure  with validation */
 export const getCompanyStructure = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        // const getTreeStructure = await user.aggregate([
-        //     {
-        //         $match: {
-        //             _id: new mongoose.Types.ObjectId((req as any).user._id)
-        //         }
-        //     },
-        //     {
-        //         $lookup: {
-        //             from: "companies",
-        //             localField: "_id",
-        //             foreignField: "userId",
-        //             as: "companyDetails",
-        //             pipeline: [
-        //                 {
-        //                     $project: {
-        //                         _id: 1,
-        //                         name: 1,
-        //                         email: 1
-        //                     }
-        //                 }
-        //             ]
-        //         }
-        //     },
-        //     {
-        //         $unwind: "$companyDetails"
-        //     },
-        //     {
-        //         $lookup: {
-        //             from: "departments",
-        //             let: { companyId: "$companyDetails._id" },
-        //             pipeline: [
-        //                 {
-        //                     $match: {
-        //                         $expr: { $eq: ["$companyId", "$$companyId"] }
-        //                     }
-        //                 },
-        //                 {
-        //                     $lookup: {
-        //                         from: "subdepartments",
-        //                         let: { departmentId: "$_id" },
-        //                         pipeline: [
-        //                             {
-        //                                 $match: {
-        //                                     $expr: { $eq: ["$departmentId", "$$departmentId"] }
-        //                                 }
-        //                             },
-        //                             {
-        //                                 $project: {
-        //                                     _id: 1,
-        //                                     name: 1,
-        //                                 }
-        //                             }
-        //                         ],
-        //                         as: "subDepartments"
-        //                     },
-
-        //                 },
-        //                 {
-        //                     $project: {
-        //                         _id: 1,
-        //                         name: 1,
-        //                         subDepartments: 1
-        //                     }
-        //                 }
-        //             ],
-        //             as: "companyDetails.departments"
-        //         }
-        //     },
-        //     {
-        //         $group: {
-        //             _id: "$_id",
-        //             name: { $first: "$name" },
-        //             email: { $first: "$email" },
-        //             companyDetails: { $push: "$companyDetails" }
-        //         }
-        //     }
-        // ]);
         const getTreeStructure = await user.aggregate([
             {
                 $match: {
@@ -567,3 +491,56 @@ export const getCompanyStructure = async (req: Request, res: Response, next: Nex
         return;
     }
 }
+
+
+/* Synergies CRUD Start */
+export const addSynergies = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    let body = req.body;
+    try {
+        if (body.owner) {
+            const isValidOwnerId = await user.findById({ _id: body.owner }, { _id: 1 }).lean();
+            if (isValidOwnerId && Object.keys(isValidOwnerId)?.length === 0) {
+                res.status(502).json({ status: 502, success: false, message: "Invalid owner ID!", data: {} });
+                return;
+            }
+        }
+        if (body.companyId) {
+            const isValidCompanyId = await company.findById({ _id: body.companyId }, { _id: 1 }).lean();
+            if (isValidCompanyId && Object.keys(isValidCompanyId)?.length === 0) {
+                res.status(502).json({ status: 502, success: false, message: "Invalid company ID!", data: {} });
+                return;
+            }
+        }
+        body.userId = (req as any).user._id;
+        const response = await synergies.create(body);
+        if (response && Object.keys(response)?.length > 0) {
+            res.status(200).json({ status: 200, success: true, message: "Synergies add succesfully!", data: {} });
+            return;
+        } else {
+            res.status(500).json({ status: 500, success: false, message: "Synergies not add!", data: {} });
+            return;
+        }
+    } catch (error) {
+        res.status(500).json({ status: 500, success: false, message: "Internal server error!", data: {} });
+        return;
+    }
+}
+
+export const removeSynergies = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    let query = req.query;
+    try {
+        const response = await synergies.findByIdAndUpdate({ _id: query.id }, { isDeleted: 1 });
+        if (response && Object.keys(response)?.length > 0) {
+            res.status(200).json({ status: 200, success: true, message: "Synergies remove succesfully!", data: {} });
+            return;
+        } else {
+            res.status(500).json({ status: 500, success: false, message: "Synergies not remove!", data: {} });
+            return;
+        }
+    } catch (error) {
+        res.status(500).json({ status: 500, success: false, message: "Internal server error!", data: {} });
+        return;
+    }
+}
+
+/* Synergies CRUD End */

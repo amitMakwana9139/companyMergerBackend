@@ -50,10 +50,42 @@ export const editDepartmentValidation = Joi.object({
     name: Joi.string().required()
 })
 
-
 // Add Sub Department validation
 export const subDepartmentValidation = Joi.object({
     name: Joi.string().required(),
     departmentId: Joi.string().required(),
     companyId: Joi.string().required()
-})
+});
+
+// Add synergies
+export const synergiesValidation = Joi.object({
+    name: Joi.string().required(),
+    synergy_description: Joi.string().required(),
+    strategy: Joi.string().required(),
+    process_steps: Joi.array().required(),
+    owner: Joi.string().required(),
+    companyId: Joi.string().required(),
+    claim_blame: Joi.array().items(
+        Joi.object({
+            claimed_by: Joi.string().required(),
+            blamed_to: Joi.string().required(),
+            comments: Joi.string().required()
+        })
+    ),
+    system_requirements: Joi.array().items(
+        Joi.object({
+            title: Joi.string().required(),
+            type: Joi.string().required(),
+            priority: Joi.string().required(),
+            assigned_team: Joi.string().required(),
+        })
+    ),
+    execution_plan: Joi.array().items(
+        Joi.object({
+            phase: Joi.string().required(),
+            weeks: Joi.string().required(),
+            sr_titles: Joi.string().required(),
+        })
+    ),
+    // userId: Joi.string().required()
+});

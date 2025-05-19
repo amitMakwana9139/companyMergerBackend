@@ -1,8 +1,12 @@
 import express from "express";
 import bodyParser from 'body-parser';
 import routes from "../src/routes/index"
+import cors from 'cors';
 
 const app = express();
+
+// Cors 
+app.use(cors());
 
 // Middleware
 app.use(bodyParser.json());

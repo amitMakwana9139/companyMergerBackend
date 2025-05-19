@@ -7,9 +7,11 @@ import {
     editDepartmentValidation,
     loginValidation,
     signupValidation,
-    subDepartmentValidation
+    subDepartmentValidation,
+    synergiesValidation
 } from "../validations/auth";
 import {
+    addSynergies,
     createCompany,
     createDepartment,
     createSubDepartment,
@@ -23,6 +25,7 @@ import {
     getCompanyStructure,
     getDepartment,
     getSubDepartment,
+    removeSynergies,
     userLogin,
     userSignup
 } from "../controllers/auth";
@@ -55,4 +58,8 @@ router.delete("/removeSubDepartment", verifyAuthtoken, validateRequestForQuery(i
 
 // Get company tree structure
 router.get("/getCompanyStructure", verifyAuthtoken, getCompanyStructure);
+
+// Syenergies CRUD 
+router.post("/addSynergies", verifyAuthtoken, validateRequest(synergiesValidation), addSynergies);
+router.delete("/removeSynergies", verifyAuthtoken, validateRequestForQuery(commonIdValidation), removeSynergies);
 export default router;  
