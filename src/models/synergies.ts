@@ -46,7 +46,7 @@ const synergiesSchema: Schema = new Schema(
         companyId: {
             type: mongoose.Schema.Types.ObjectId,
             default: "",
-            required: true,
+            required: false,
             ref: "Company"
         },
         claim_blame: [
@@ -74,7 +74,7 @@ const synergiesSchema: Schema = new Schema(
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             default: "",
-            required: true,
+            required: false,
             ref: "User"
         },
         isActive: {                               // 0 - Not Active , 1 = Is Active

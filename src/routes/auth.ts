@@ -8,6 +8,7 @@ import {
     loginValidation,
     signupValidation,
     subDepartmentValidation,
+    synergiesEditValidation,
     synergiesValidation
 } from "../validations/auth";
 import {
@@ -21,10 +22,12 @@ import {
     editCompany,
     editDepartment,
     editSubDepartment,
+    editSynergies,
     getCompany,
     getCompanyStructure,
     getDepartment,
     getSubDepartment,
+    getSynergies,
     removeSynergies,
     userLogin,
     userSignup
@@ -61,5 +64,7 @@ router.get("/getCompanyStructure", verifyAuthtoken, getCompanyStructure);
 
 // Syenergies CRUD 
 router.post("/addSynergies", verifyAuthtoken, validateRequest(synergiesValidation), addSynergies);
+router.get("/getSynergies", verifyAuthtoken, validateRequestForQuery(commonPaginationValidation), getSynergies);
+router.put("/editSynergies", verifyAuthtoken, validateRequest(synergiesEditValidation), editSynergies);
 router.delete("/removeSynergies", verifyAuthtoken, validateRequestForQuery(commonIdValidation), removeSynergies);
 export default router;  

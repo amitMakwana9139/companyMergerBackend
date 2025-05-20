@@ -526,6 +526,146 @@ export const addSynergies = async (req: Request, res: Response, next: NextFuncti
     }
 }
 
+export const getSynergies = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const { page, limit, search } = req.query;
+    try {
+        const pageNumber: number = Number(page ?? 1);
+        const pageLimit: number = Number(limit ?? 1);
+        const skip: number = (pageNumber - 1) * pageLimit;
+
+        const response = await synergies.aggregate([
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "owner",
+                    foreignField: "_id",
+                    as: "ownerDetails"
+                }
+            },
+            {
+                $lookup: {
+                    from: "companies",
+                    localField: "companyId",
+                    foreignField: "_id",
+                    as: "companyDetails"
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "userId",
+                    foreignField: "_id",
+                    as: "userDetails"
+                }
+            },
+            {
+                $sort: { createdAt: -1 }
+            },
+            {
+                $project: {
+                    name: 1,
+                    synergy_description: 1,
+                    strategy: 1,
+                    process_steps: 1,
+                    claim_blame: 1,
+                    system_requirements: 1,
+                    execution_plan: 1,
+                    isActive: 1,
+                    isDeleted: 1,
+                    companyId: 1,
+                    owner: 1,
+                    userId: 1,
+
+                    ownerDetails: {
+                        $map: {
+                            input: "$ownerDetails",
+                            as: "owner",
+                            in: { _id: "$$owner._id", name: "$$owner.name" }
+                        }
+                    },
+                    userDetails: {
+                        $map: {
+                            input: "$userDetails",
+                            as: "user",
+                            in: { _id: "$$user._id", name: "$$user.name" }
+                        }
+                    },
+                    companyDetails: {
+                        $map: {
+                            input: "$companyDetails",
+                            as: "company",
+                            in: {
+                                _id: "$$company._id",
+                                name: "$$company.name",
+                                email: "$$company.email",
+                                userId: "$$company.userId",
+                                merged_with: "$$company.merged_with",
+                                isActive: "$$company.isActive",
+                                isDeleted: "$$company.isDeleted"
+                            }
+                        }
+                    },
+                }
+            },
+            {
+                $facet: {
+                    metadata: [{ $count: "total" }],
+                    data: [
+                        { $skip: skip },
+                        { $limit: pageLimit }
+                    ]
+                }
+            }
+        ]);
+        const totalCount = response[0].metadata[0]?.total || 0;
+        const data = response[0].data;
+
+        // 2. Fetch full data for stats
+
+        if (response && Object.keys(response)?.length > 0) {
+            res.status(200).json({
+                status: 200,
+                success: true,
+                message: "Synergies get succesfully!",
+                data: {
+                    data: data,
+                    count: totalCount,
+                    page: Math.ceil((totalCount / pageLimit)),
+                }
+            });
+            return;
+        } else {
+            res.status(500).json({ status: 500, success: false, message: "Synergies not get!", data: {} });
+            return;
+        }
+    } catch (error) {
+        res.status(500).json({ status: 500, success: false, message: "Internal server error!", data: { data: [], count: 0, page: 0 } });
+        return;
+    }
+}
+
+export const editSynergies = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const body = req.body;
+    try {
+
+        const response = await synergies.findByIdAndUpdate(
+            body.id,
+            body,
+            { new: true }
+        );
+        if (response && Object.keys(response)?.length > 0) {
+            res.status(200).json({ status: 200, success: true, message: "Synergies edit succesfully!", data: {} });
+            return;
+        } else {
+            res.status(500).json({ status: 500, success: false, message: "Synergies not edit!", data: {} });
+            return;
+        }
+    } catch (error) {
+        res.status(500).json({ status: 500, success: false, message: "Internal server error!", data: {} });
+        return;
+    }
+}
+
 export const removeSynergies = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     let query = req.query;
     try {
